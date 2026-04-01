@@ -21,6 +21,7 @@ try:
     from rich.markdown import Markdown
     from rich.panel import Panel
     from rich.theme import Theme
+    from rich.table import Table
 
     custom_theme = Theme(
         {
@@ -36,6 +37,7 @@ try:
 except ImportError:
     RICH_AVAILABLE = False
     console = None
+    Table = None
 
 
 DEFAULT_TECH_STOCKS = ["AAPL", "MSFT", "NVDA", "TSLA", "GOOGL", "AMZN", "META", "BTC", "ETH", "SOL"]
@@ -106,15 +108,34 @@ class RichPrinter:
             return
 
         if self.enabled:
+            table = Table(
+                title="Structured Market Intelligence",
+                show_header=True,
+                header_style="bold cyan",
+                border_style="dim",
+                expand=True
+            )
+            table.add_column("Ticker", style="bold yellow", width=10)
+            table.add_column("Source & Time", style="dim", width=25)
+            table.add_column("Intelligence (Headline + Summary)")
+
             for item in items:
-                title = f"[{item.ticker}] {item.title}"
-                body = (
-                    f"[bold]Source:[/] {item.source}\n"
-                    f"[bold]Published:[/] {item.published}\n"
-                    f"[bold]Summary:[/] {item.summary[:400]}\n"
-                    f"[bold]Link:[/] {item.link}"
+                # Truncate summary for neatness
+                clean_summary = (item.summary or "").replace("\n", " ")
+                summary_excerpt = f"{clean_summary[:280]}..." if len(clean_summary) > 280 else clean_summary
+                
+                source_time = f"[bold cyan]{item.source}[/]\n{item.published}"
+                intelligence = (
+                    f"[bold white]{item.title}[/]\n"
+                    f"[dim]{summary_excerpt}[/]\n"
+                    f"[blue underline]{item.link}[/]"
                 )
-                self.console.print(Panel(body, title=title, border_style="cyan", padding=(1, 1)))
+                table.add_row(item.ticker, source_time, intelligence)
+                # Add a spacer row between news items for readability if they aren't the last one
+                if item != items[-1]:
+                    table.add_row("", "", "")
+
+            self.console.print(table)
         else:
             for item in items:
                 print(f"\n[{item.ticker}] {item.title}")
@@ -200,7 +221,7 @@ class NewsFetcher:
                 all_items.extend(self.fetch_for_ticker(clean_ticker))
             except requests.RequestException as err:
                 printer.print_line(f"Failed to fetch news for {clean_ticker}: {err}", "error")
-        all_items.sort(key=lambda x: x.published, reverse=True)
+        all_items.sort(key=lambda x: (x.ticker, x.published), reverse=True)
         return all_items
 
 

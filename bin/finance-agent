@@ -1,14 +1,20 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env bash
+# Compatible with Zsh (macOS) and Bash (Windows/Linux)
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-PYTHON_BIN="$SCRIPT_DIR/.venv/bin/python"
-MAIN_PY="$SCRIPT_DIR/main.py"
+# Get absolute path to the project root
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-if [[ ! -x "$PYTHON_BIN" ]]; then
-  echo "Missing Python executable at: $PYTHON_BIN"
-  echo "Create/activate .venv and install dependencies first."
-  exit 1
+# Find the Python executable (Windows uses Scripts/, Unix uses bin/)
+if [[ -f "$PROJECT_ROOT/.venv/Scripts/python.exe" ]]; then
+    PYTHON_BIN="$PROJECT_ROOT/.venv/Scripts/python.exe"
+elif [[ -f "$PROJECT_ROOT/.venv/bin/python" ]]; then
+    PYTHON_BIN="$PROJECT_ROOT/.venv/bin/python"
+else
+    echo "Error: Virtual environment not found at $PROJECT_ROOT/.venv"
+    exit 1
 fi
 
+MAIN_PY="$PROJECT_ROOT/main.py"
 exec "$PYTHON_BIN" "$MAIN_PY" "$@"

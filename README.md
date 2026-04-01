@@ -5,6 +5,7 @@ CLI finance intelligence agent for tech + crypto symbols, with optional RL-focus
 ## Features
 
 - Latest news gathering for tech and crypto symbols
+- **Structured, table-based market intelligence output** (Rich UI) grouped by ticker and sorted by date
 - Default symbols: AAPL, MSFT, NVDA, TSLA, GOOGL, AMZN, META, BTC, ETH, SOL
 - Theme filtering (default: power, oil, tech)
 - Optional Gemini summary and RL companion brief
