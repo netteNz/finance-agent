@@ -1,0 +1,6 @@
+feedparser
+google-api-core
+google-genai
+requests
+rich
+tenacity

@@ -1,0 +1,16 @@
+#!/usr/bin/env zsh
+
+# Latest filtered news links
+
+echo 'DEFAULT: Money Matters with Jim Spiro: Rattling stock market and oil prices - fox8live.com'
+open 'https://news.google.com/rss/articles/CBMiuwFBVV95cUxNQmJRQklvNjFJbFhCUGZ6LUllUkdiUmc5SkFxcENYN0dXeGNXN0x3cWdWYVFwV1dROHBrSmw4Xzd0QkwtRkdyR0J4ZjdfeGFodjh4T2tKN3lLLTBvVXJiamZPYUx2VUU0VDRQcGdGbFNBc0hyMDRlazlxMlFsZzV0cDJqTDRvTlUzb1pKekVTc016dk1ETERnQjktNnFjcVRPTGlGbzdxdTFrdFc1M1kzV3FDaFA0Z1lqSHI4?oc=5'
+sleep 1
+echo 'DEFAULT: Crude Oil Retreat Lifts Dow 1,124 Points: Stock Market Today - kiplinger.com'
+open 'https://news.google.com/rss/articles/CBMipAFBVV95cUxNMGNOd0lCQ1VCNnQtRG9Kc1g0RDF1OWlsSDBHSDlxVnNWamRDMWZfS3hvNXFfbzIteG92aWR1TG0xaDlCeUF2OTdNcTN1MS1POG9aUDYyM1B5QXF5R3RETUpQSU95RVVhaGt1NnZxMWNzRW9ib0hzSi02RkpFTGQtaDFNUVFrZVRKY0VTam8yY25KQUdLcUhjN04xVnhDVXJvOG9zdA?oc=5'
+sleep 1
+echo 'DEFAULT: Surging Chevron stock has more going for it than just higher oil prices - thestreet.com'
+open 'https://news.google.com/rss/articles/CBMitAFBVV95cUxObGZVSEJOSC1pNS0tYVI4LXdUbWRISVU2Y1U4UW9xRFZEdzdjczJYSTR1MkdfOTFPdFdwNXhNODZxUldZOUwwaWdLN0Q5NENoaTk1YkU1dVlGZnU3Rm5KYUVWdmJMemtub0ZvRWlBYm1EcmJmZXJ0WDd2UVdpYWpsdzJobVRGM1VUeThzNXVSMlhnZ0FjTDFadklGdThvZ2RUb2w3Um9EWWt0N2hWX3BtbmdmMmM?oc=5'
+sleep 1
+echo 'DEFAULT: Stock market bulls, dont forget this one: Oil price shocks usually lead to a recession - Yahoo Finance'
+open 'https://news.google.com/rss/articles/CBMiygFBVV95cUxQU1JCNzE5T1AxaEZXbWV0bHVsSEJadHhqUHhDT29IdjlMTnFoLXRyRU1pTHBYbTlXSlpSRXo1VzNhQW1JeHhKdldHa2lRcUFQYjJlYkxOMHZTNzdRVVpBZXA4SFM0UmR6dHJwS3c1YXJDNDU4dW9LM0RjWTQ0VS1HR0o0WjZqS1lnWHdpWnYwSEJKOW1zdFA4Z0RtZXMwZ2o5dl9JbEVKdk9kdDNRUUJiOUZNSnNhSmtUeUFYc0RlWktyb1VOMFQ0WmVR?oc=5'
+sleep 1

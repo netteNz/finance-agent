@@ -1,0 +1,14 @@
+#!/usr/bin/env zsh
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+PYTHON_BIN="$SCRIPT_DIR/.venv/bin/python"
+MAIN_PY="$SCRIPT_DIR/main.py"
+
+if [[ ! -x "$PYTHON_BIN" ]]; then
+  echo "Missing Python executable at: $PYTHON_BIN"
+  echo "Create/activate .venv and install dependencies first."
+  exit 1
+fi
+
+exec "$PYTHON_BIN" "$MAIN_PY" "$@"
