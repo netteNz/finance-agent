@@ -10,87 +10,90 @@ CLI finance intelligence agent for tech + crypto symbols, with optional RL-focus
 - Theme filtering (default: power, oil, tech)
 - Optional Gemini summary and RL companion brief
 - Markdown context feeding (for session reports) to generate next actionable steps
-- Stable execution from any directory via launcher script
+- **Cross-Platform**: Native support for macOS/Linux (Zsh/Bash) and Windows (PowerShell/Git Bash).
+- Stable execution from any directory via launcher scripts.
 
 ## Requirements
 
-- macOS/Linux shell (zsh)
+- Python 3.9+
 - Python virtual environment at `.venv`
 - Dependencies installed:
 
+### macOS / Linux
 ```bash
-cd /Users/nettenz/Projects/agentic-dev/awesome-gemini-cli/finance
 ./.venv/bin/pip install -r requirements.txt
 ```
 
+### Windows
+```powershell
+.\.venv\Scripts\pip.exe install -r requirements.txt
+```
+
+### API Key
 Optional for AI summary / next-step planning:
 
 ```bash
+# macOS / Linux
 export GEMINI_API_KEY="your_key_here"
+
+# Windows (PowerShell)
+$env:GEMINI_API_KEY="your_key_here"
 ```
 
 ## Seamless Usage
 
-### 1) Run with full path (works from anywhere)
+### 1) Run with relative or full path
 
+#### macOS / Linux
 ```bash
-/Users/nettenz/Projects/agentic-dev/awesome-gemini-cli/finance/bin/finance-agent --help
+./bin/finance-agent --help
+```
+
+#### Windows
+```powershell
+.\bin\finance-agent.ps1 --help
 ```
 
 ### 2) Add to PATH (recommended)
 
-Add this line to your `~/.zshrc`:
-
+#### macOS / Linux (Zsh)
+Add this to your `~/.zshrc`:
 ```bash
-export PATH="$PATH:/Users/nettenz/Projects/agentic-dev/awesome-gemini-cli/finance/bin"
+export PATH="$PATH:/path/to/finance/bin"
 ```
 
-Reload shell:
-
-```bash
-source ~/.zshrc
-```
-
-Now run from anywhere:
-
-```bash
-finance-agent --help
+#### Windows (PowerShell)
+Add this to your `$PROFILE`:
+```powershell
+$env:Path += ";C:\path\to\finance\bin"
 ```
 
 ## Core Commands
 
 ### Default run
-
 ```bash
 finance-agent
+# OR (Windows)
+finance-agent.ps1
 ```
 
 ### Summary + RL brief
-
 ```bash
 finance-agent --summary --rl-brief
 ```
 
 ### Use attached markdown context and generate next steps
-
 ```bash
 finance-agent \
   --summary \
   --rl-brief \
   --next-steps \
-  --context-file /Users/nettenz/Projects/agentic-dev/reinforcement-learning-stocks/sessions/quant-report-2026-04-01-0251.md
+  --context-file sessions/quant-report-2026-04-01-0251.md
 ```
 
 ### Custom symbols (supports $ prefix)
-
 ```bash
-finance-agent --tickers $BTC $ETH $SOL NVDA MSFT --summary --next-steps
-```
-
-### Custom themes
-
-```bash
-finance-agent --themes power oil tech ai datacenter
+finance-agent --tickers BTC ETH SOL NVDA MSFT --summary --next-steps
 ```
 
 ## CLI Options
@@ -108,5 +111,5 @@ finance-agent --themes power oil tech ai datacenter
 ## Notes
 
 - The launcher uses the local `.venv` automatically.
-- Relative paths for instruction/context files are resolved from current directory first, then from the finance project directory.
-- A `review_and_run.sh` file is generated with links to open collected stories.
+- Relative paths for instruction/context files are resolved from the current directory first, then from the finance project directory.
+- `review_and_run.sh` (macOS/Linux) and `review_and_run.ps1` (Windows) are generated with links to open collected stories.

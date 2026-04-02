@@ -429,16 +429,21 @@ class ActionStepPlanner:
 class ReviewScriptWriter:
     @staticmethod
     def write(items: List[NewsItem]) -> None:
+        import sys
         # Generate both .sh and .ps1 for maximum portability
-        sh_lines = ["#!/usr/bin/env zsh", "", "# Latest filtered news links", ""]
+        # Use bash for broader compatibility (works on macOS, Linux, and Git Bash)
+        sh_lines = ["#!/usr/bin/env bash", "", "# Latest filtered news links", ""]
         ps1_lines = ["# Latest filtered news links", ""]
+        
+        # Use sys.executable to ensure we use the same python that is currently running
+        python_exe = sys.executable
         
         for item in items:
             if item.link:
                 clean_title = item.title.replace("'", "").replace("\"", "")
                 # Shell version
                 sh_lines.append(f"echo '{item.ticker}: {clean_title}'")
-                sh_lines.append(f"python -m webbrowser -t '{item.link}'")
+                sh_lines.append(f"\"{python_exe}\" -m webbrowser -t '{item.link}'")
                 sh_lines.append("sleep 1")
                 
                 # PowerShell version
