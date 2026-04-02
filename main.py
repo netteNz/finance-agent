@@ -15,6 +15,13 @@ from google.api_core import exceptions
 from google.genai import types
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_random_exponential
 
+try:
+    from googlenewsdecoder import gnewsdecoder
+    GOOGLENEWSDECODER_AVAILABLE = True
+except ImportError:
+    GOOGLENEWSDECODER_AVAILABLE = False
+
+
 # --- UI Setup with Rich ---
 try:
     from rich.console import Console
@@ -117,7 +124,7 @@ class RichPrinter:
             )
             table.add_column("Ticker", style="bold yellow", width=10)
             table.add_column("Source & Time", style="dim", width=25)
-            table.add_column("Intelligence (Headline + Summary)")
+            table.add_column("Intelligence (Headline + Summary)", overflow="fold")
 
             for item in items:
                 # Truncate summary for neatness
@@ -128,7 +135,7 @@ class RichPrinter:
                 intelligence = (
                     f"[bold white]{item.title}[/]\n"
                     f"[dim]{summary_excerpt}[/]\n"
-                    f"[blue underline]{item.link}[/]"
+                    f"[blue underline][link={item.link}]{item.link}[/link]"
                 )
                 table.add_row(item.ticker, source_time, intelligence)
                 # Add a spacer row between news items for readability if they aren't the last one
@@ -181,6 +188,68 @@ class NewsFetcher:
         lower = (text or "").lower()
         return any(theme.lower() in lower for theme in themes)
 
+    @staticmethod
+    def _decode_google_news_url(source_url: str) -> str:
+        """Resolves the 2024/2025 style Google News redirect URLs to the direct article link."""
+        if GOOGLENEWSDECODER_AVAILABLE:
+            try:
+                decoded_data = gnewsdecoder(source_url, interval=1)
+                if decoded_data.get("status"):
+                    return decoded_data["decoded_url"]
+            except Exception:
+                pass # Fallback to manual implementation
+
+        try:
+            # Extract the article ID
+            if "articles/" not in source_url:
+                return source_url
+            
+            article_id = source_url.split("articles/")[1].split("?")[0]
+            
+            # Google's BatchExecute protocol for resolving article URLs
+            url = "https://news.google.com/_/DotsSplashUi/data/batchexecute?rpcids=Fbv4je"
+            payload = [
+                [
+                    ["Fbv4je", 
+                     re.sub(r"\s+", "", f"""["garturlreq", [["en", "US", ["FINANCE_TOP_INDICES", "WEB_TEST_1_0_0"], null, null, 1, 1, "US:en", null, 180, null, null, null, null, null, 0, null, None, [1717597091, 738001000]], "en", "US", 1, [2, 3, 4, 8], 1, 0, "658136446", 0, 0, null, 0], "{article_id}"]""").replace("null", "null"),
+                     None, 
+                     "generic"]
+                ]
+            ]
+            
+            # Wait, the payload structure in the search result used json.dumps. 
+            # I should use json.dumps for robustness.
+            import json
+            import urllib.parse
+            
+            # Real payload from search result (Option 2)
+            inner_payload = ["garturlreq", [["en", "US", ["FINANCE_TOP_INDICES", "WEB_TEST_1_0_0"], None, None, 1, 1, "US:en", None, 180, None, None, None, None, None, 0, None, None, [1717597091, 738001000]], "en", "US", 1, [2, 3, 4, 8], 1, 0, "658136446", 0, 0, None, 0], article_id]
+            payload = [[["Fbv4je", json.dumps(inner_payload), None, "generic"]]]
+            
+            headers = {
+                "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
+                "Referer": "https://news.google.com/"
+            }
+            data = f"f.req={urllib.parse.quote(json.dumps(payload))}"
+            
+            response = requests.post(url, headers=headers, data=data, timeout=10)
+            if response.status_code != 200:
+                return source_url
+            
+            # Parse the response (Google's format starts with )]}' )
+            res_text = response.text.split("\n\n")[1]
+            res_json = json.loads(res_text)
+            
+            if not res_json or not res_json[0] or not res_json[0][2]:
+                return source_url
+                
+            inner_data = json.loads(res_json[0][2])
+            return inner_data[1][1]
+            
+        except Exception:
+            # Fallback to the original URL if decoding fails
+            return source_url
+
     def fetch_for_ticker(self, ticker: str) -> List[NewsItem]:
         url = self._build_google_news_rss_url(ticker, self.themes)
         response = requests.get(url, timeout=self.timeout)
@@ -198,16 +267,24 @@ class NewsFetcher:
             if "source" in entry and isinstance(entry.source, dict):
                 source = entry.source.get("title", "Unknown")
 
+            original_link = entry.get("link", "")
+            # Decode Google News links to direct article links to avoid 400 errors and tracking redirects
+            decoded_link = self._decode_google_news_url(original_link)
+
             items.append(
                 NewsItem(
                     ticker=ticker,
                     title=title,
                     source=source,
-                    link=entry.get("link", ""),
+                    link=decoded_link,
                     published=self._parse_entry_date(entry),
                     summary=summary,
                 )
             )
+            # Small delay to avoid rate limiting from Google's BatchExecute API if many URLs are decoded
+            import time
+            time.sleep(0.2)
+            
             if len(items) >= self.per_ticker_limit:
                 break
 
@@ -352,16 +429,29 @@ class ActionStepPlanner:
 class ReviewScriptWriter:
     @staticmethod
     def write(items: List[NewsItem]) -> None:
-        lines = ["#!/usr/bin/env zsh", "", "# Latest filtered news links", ""]
+        # Generate both .sh and .ps1 for maximum portability
+        sh_lines = ["#!/usr/bin/env zsh", "", "# Latest filtered news links", ""]
+        ps1_lines = ["# Latest filtered news links", ""]
+        
         for item in items:
             if item.link:
-                clean_title = item.title.replace("'", "")
-                lines.append(f"echo '{item.ticker}: {clean_title}'")
-                lines.append(f"open '{item.link}'")
-                lines.append("sleep 1")
+                clean_title = item.title.replace("'", "").replace("\"", "")
+                # Shell version
+                sh_lines.append(f"echo '{item.ticker}: {clean_title}'")
+                sh_lines.append(f"python -m webbrowser -t '{item.link}'")
+                sh_lines.append("sleep 1")
+                
+                # PowerShell version
+                ps1_lines.append(f"Write-Host '{item.ticker}: {clean_title}'")
+                ps1_lines.append(f"Start-Process '{item.link}'")
+                ps1_lines.append("Start-Sleep -Seconds 1")
+                
         with open("review_and_run.sh", "w", encoding="utf-8") as file_obj:
-            file_obj.write("\n".join(lines) + "\n")
+            file_obj.write("\n".join(sh_lines) + "\n")
         os.chmod("review_and_run.sh", os.stat("review_and_run.sh").st_mode | stat.S_IEXEC)
+        
+        with open("review_and_run.ps1", "w", encoding="utf-8") as file_obj:
+            file_obj.write("\n".join(ps1_lines) + "\n")
 
 
 class FinanceNewsAgentApp:
